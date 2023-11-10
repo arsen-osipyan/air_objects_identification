@@ -12,10 +12,11 @@ class ControlPoint(Model):
         self.__radar_system_id_incr = 0
 
         self.__data = pd.DataFrame(
-            columns=['load_time', 'radar_system_id', 'detection_time', 'detection_ao_id', 'detection_id',
-                     'detection_error', 'detection_x', 'detection_y', 'detection_z']
+            columns=['load_time', 'load_time_id', 'radar_system_id', 'detection_time', 'detection_ao_id',
+                     'detection_id', 'detection_error', 'detection_x', 'detection_y', 'detection_z']
         )
         self.__last_load_time = None
+        self.__load_time_id_incr = 0
     
     def trigger(self) -> NoReturn:
         super().trigger()
@@ -39,12 +40,14 @@ class ControlPoint(Model):
                 rs_data = rs_data[rs_data['detection_time'] > self.__last_load_time]
             if len(rs_data) != 0:
                 rs_data.loc[:, ['load_time']] = current_time
+                rs_data.loc[:, ['load_time_id']] = self.__load_time_id_incr
                 rs_data.loc[:, ['radar_system_id']] = k
-                self.concat_data(rs_data)
+                self.__concat_data(rs_data)
 
         self.__last_load_time = current_time
+        self.__load_time_id_incr += 1
 
-    def concat_data(self, df: pd.DataFrame) -> NoReturn:
+    def __concat_data(self, df: pd.DataFrame) -> NoReturn:
         df = df[list(self.__data.columns)]
         if len(self.__data) == 0:
             self.__data = df

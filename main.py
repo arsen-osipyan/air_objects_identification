@@ -27,6 +27,7 @@ radar_systems = [
 ]
 
 air_env = AirEnv()
+air_env.set_public_ids(True)
 for i in range(len(air_objects)):
     air_env.attach_air_object(air_objects[i])
 
