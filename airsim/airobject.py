@@ -1,4 +1,5 @@
 from .model import Model
+from typing import List, NoReturn
 
 
 class AirObject(Model):
