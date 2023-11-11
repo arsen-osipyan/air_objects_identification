@@ -36,7 +36,7 @@ for i in range(len(radar_systems)):
     radar_systems[i].attach_air_environment(air_env)
     control_point.attach_radar_system(radar_systems[i])
 
-supervisor = Supervisor(0.0, 100.0, 0.5)
+supervisor = Supervisor(0.0, 2.0, 0.5)
 supervisor.attach_air_environment(air_env)
 supervisor.attach_control_point(control_point)
 supervisor.attach_radar_systems(radar_systems)

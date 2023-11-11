@@ -7,31 +7,46 @@ from .radarsystem import RadarSystem
 class ControlPoint(Model):
 
     def __init__(self) -> NoReturn:
+        """
+        Initializes ControlPoint
+        """
         super().__init__()
         self.__radar_systems = dict()
         self.__radar_system_id_incr = 0
 
         self.__data = pd.DataFrame(
-            columns=['load_time', 'load_time_id', 'radar_system_id', 'detection_time', 'detection_ao_id',
-                     'detection_id', 'detection_error', 'detection_x', 'detection_y', 'detection_z']
+            columns=['load_time', 'load_time_id', 'radar_system_id', 'detection_time', 'air_object_id',
+                     'detection_id', 'detection_error', 'air_object_x', 'air_object_y', 'air_object_z']
         )
         self.__last_load_time = None
         self.__load_time_id_incr = 0
     
     def trigger(self) -> NoReturn:
+        """
+        Runs upload_data() method
+        """
         super().trigger()
 
         self.upload_data()
-        self.identify_air_objects_algorithm()
-        self.identify_air_objects_rnn()
+        # self.identify_air_objects_algorithm()
+        # self.identify_air_objects_rnn()
 
     def identify_air_objects_algorithm(self) -> NoReturn:
+        """
+        Fills None values in data in column 'detection_ao_id' using algorithm
+        """
         pass
 
     def identify_air_objects_rnn(self) -> NoReturn:
+        """
+        Fills None values in data in column 'detection_ao_id' using RNN
+        """
         pass
 
     def upload_data(self) -> NoReturn:
+        """
+        Uploads data from last load time to inner dataframe
+        """
         current_time = self.time.get()
 
         for k, v in self.__radar_systems.items():
@@ -48,6 +63,10 @@ class ControlPoint(Model):
         self.__load_time_id_incr += 1
 
     def __concat_data(self, df: pd.DataFrame) -> NoReturn:
+        """
+        Concats inner dataframe and provided and replaces it if inner is empty
+        :param df: dataframe to concat with
+        """
         df = df[list(self.__data.columns)]
         if len(self.__data) == 0:
             self.__data = df
@@ -55,9 +74,19 @@ class ControlPoint(Model):
             self.__data = pd.concat([self.__data, df])
 
     def is_attached(self, radar_system: RadarSystem) -> bool:
+        """
+        Checks if provided RadarSystem is attached to ControlPoint
+        :param radar_system: RadarSystem to check
+        :return: attachment status
+        """
         return radar_system in self.__radar_systems.values()
 
     def attach_radar_system(self, radar_system: RadarSystem) -> int:
+        """
+        Attaches RadarSystem if it wasn't attached
+        :param radar_system: RadarSystem to attach
+        :return: RadarSystem inner id
+        """
         if self.is_attached(radar_system):
             raise RuntimeError('RadarSystem already attached to ControlPoint.')
         self.__radar_systems[self.__radar_system_id_incr] = radar_system
@@ -65,6 +94,11 @@ class ControlPoint(Model):
         return self.__radar_system_id_incr - 1
 
     def detach_radar_systems(self, radar_system: RadarSystem) -> int:
+        """
+        Detaches RadarSystem if it was attached
+        :param radar_system: RadarSystem to detach
+        :return: RadarSystem inner id
+        """
         if self.is_attached(radar_system):
             raise RuntimeError('RadarSystem is not attached to ControlPoint.')
         for k, v in self.__radar_systems.items():
