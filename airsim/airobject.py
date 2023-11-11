@@ -13,9 +13,9 @@ class AirObject(Model):
         :param acceleration: acceleration in R^3 (meters / seconds^2)
         """
         super().__init__()
-        self.__position = position
-        self.__velocity = velocity
-        self.__acceleration = acceleration
+        self.__position = np.array(position, dtype=float)
+        self.__velocity = np.array(velocity, dtype=float)
+        self.__acceleration = np.array(acceleration, dtype=float)
 
     def trigger(self) -> NoReturn:
         """

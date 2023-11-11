@@ -16,7 +16,7 @@ class RadarSystem(Model):
         """
         super().__init__()
 
-        self.__position = position
+        self.__position = np.array(position, dtype=float)
         self.__detection_radius = detection_radius
         self.__error = error
 

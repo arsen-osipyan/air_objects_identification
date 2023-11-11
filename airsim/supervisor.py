@@ -3,11 +3,7 @@ from .time import Time
 
 class Supervisor:
 
-    def __init__(self, t_min, t_max, dt):
-        self.__t_min = t_min
-        self.__t_max = t_max
-        self.__dt = dt
-
+    def __init__(self):
         self.__air_env = None
         self.__radar_systems = []
         self.__control_point = None
@@ -27,11 +23,11 @@ class Supervisor:
             self.__radar_systems[i].trigger()
         self.__control_point.trigger()
 
-    def run(self):
+    def run(self, t_min, t_max, dt):
         t = Time()
-        t.set(self.__t_min)
+        t.set(t_min)
 
-        while t.get() <= self.__t_max:
+        while t.get() <= t_max:
             self.trigger_models()
 
-            t.step(self.__dt)
+            t.step(dt)

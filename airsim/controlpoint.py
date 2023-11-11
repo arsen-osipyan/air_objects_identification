@@ -71,6 +71,7 @@ class ControlPoint(Model):
         if len(self.__data) == 0:
             self.__data = df
         else:
+            df.index += len(self.__data)
             self.__data = pd.concat([self.__data, df])
 
     def is_attached(self, radar_system: RadarSystem) -> bool:

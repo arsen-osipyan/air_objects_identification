@@ -27,7 +27,6 @@ radar_systems = [
 ]
 
 air_env = AirEnv()
-air_env.set_public_ids(True)
 for i in range(len(air_objects)):
     air_env.attach_air_object(air_objects[i])
 
@@ -36,12 +35,17 @@ for i in range(len(radar_systems)):
     radar_systems[i].attach_air_environment(air_env)
     control_point.attach_radar_system(radar_systems[i])
 
-supervisor = Supervisor(0.0, 2.0, 0.5)
+air_env.set_public_ids(True)
+supervisor = Supervisor()
 supervisor.attach_air_environment(air_env)
 supervisor.attach_control_point(control_point)
 supervisor.attach_radar_systems(radar_systems)
 
-supervisor.run()
+supervisor.run(0, 200, 0.5)
+
+air_env.set_public_ids(False)
+
+supervisor.run(200, 300, 0.5)
 
 print(control_point.get_data())
 

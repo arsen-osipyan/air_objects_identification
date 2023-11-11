@@ -66,7 +66,7 @@ class AirEnv(Model):
         data = pd.DataFrame(columns=['id', 'x', 'y', 'z'])
         for k in self.__air_objects.keys():
             data.loc[len(data)] = {
-                'id': k if self.__public_ids else None,
+                'id': k if self.__public_ids else -1,
                 'x': self.__air_objects[k].position()[0],
                 'y': self.__air_objects[k].position()[1],
                 'z': self.__air_objects[k].position()[2]
