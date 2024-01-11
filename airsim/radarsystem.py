@@ -49,25 +49,29 @@ class RadarSystem(Model):
         """
         detections = self.__air_env.air_objects_dataframe()
 
+        detections['detection_time'] = self.time.get()
+        detections['detection_id'] = range(len(detections))
+        detections['detection_error'] = self.__error
+
+        pos = self.__position
+        rad = self.__detection_radius
+        detections['is_observed'] = detections.apply(
+            lambda row: np.sqrt((row['x'] - pos[0])**2 + (row['y'] - pos[1])**2 + (row['z'] - pos[2])**2) <= rad,
+            axis=1
+        )
+
+        detections = detections[detections['is_observed']]
+
+        detections['x'] = detections['x'] + self.__error * np.random.randn(len(detections))
+        detections['y'] = detections['y'] + self.__error * np.random.randn(len(detections))
+        detections['z'] = detections['z'] + self.__error * np.random.randn(len(detections))
+
         detections.rename(columns={
             'id': 'air_object_id',
             'x': 'air_object_x',
             'y': 'air_object_y',
             'z': 'air_object_z'
         }, inplace=True)
-
-        detections['detection_time'] = self.time.get()
-        detections['detection_id'] = range(len(detections))
-        detections['detection_error'] = self.__error
-
-        detections['is_observed'] = self.__is_observed(
-            np.array([detections['air_object_x'], detections['air_object_y'], detections['air_object_z']]))
-
-        detections = detections[detections['is_observed']]
-
-        detections['air_object_x'] = detections['air_object_x'] + self.__error * np.random.randn(len(detections))
-        detections['air_object_y'] = detections['air_object_y'] + self.__error * np.random.randn(len(detections))
-        detections['air_object_z'] = detections['air_object_z'] + self.__error * np.random.randn(len(detections))
 
         if len(self.__data) == 0:
             self.__data = detections[['detection_time', 'air_object_id', 'detection_id', 'detection_error',

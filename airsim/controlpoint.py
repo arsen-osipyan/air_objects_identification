@@ -56,7 +56,7 @@ class ControlPoint(Model):
             if len(rs_data) != 0:
                 rs_data.loc[:, ['load_time']] = current_time
                 rs_data.loc[:, ['load_time_id']] = self.__load_time_id_incr
-                rs_data.loc[:, ['radar_system_id']] = k
+                rs_data.loc[:, ['radar_system_id']] = int(k)
                 self.__concat_data(rs_data)
 
         self.__last_load_time = current_time
