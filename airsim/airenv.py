@@ -1,12 +1,13 @@
+import pandas as pd
+from typing import NoReturn, List
+
 from .model import Model
 from .airobject import AirObject
-import pandas as pd
-from typing import NoReturn
 
 
 class AirEnv(Model):
 
-    def __init__(self) -> NoReturn:
+    def __init__(self, air_objects: List[AirObject] = None) -> NoReturn:
         """
         Initializes AirEnv
         """
@@ -14,16 +15,18 @@ class AirEnv(Model):
         self.__air_objects = dict()
         self.__air_object_id_incr = 0
 
-        self.__public_ids = False
+        if air_objects is not None:
+            self.__air_objects = {i: air_objects[i] for i in range(len(air_objects))}
+            self.__air_object_id_incr = len(air_objects)
 
-    def trigger(self) -> NoReturn:
+    def trigger(self, **kwargs) -> NoReturn:
         """
         Runs trigger() method of all attached AirObject-s
         """
-        super().trigger()
+        super().trigger(**kwargs)
 
-        for k in self.__air_objects.keys():
-            self.__air_objects[k].trigger()
+        for ao_id, ao in self.__air_objects.items():
+            ao.trigger(**kwargs)
 
     def is_attached(self, air_object: AirObject) -> bool:
         """
@@ -51,7 +54,7 @@ class AirEnv(Model):
         :param air_object: AirObject to detach
         :return: AirObject inner id
         """
-        if self.is_attached(air_object):
+        if not self.is_attached(air_object):
             raise RuntimeError('AirObject is not attached to AirEnv.')
         for k, v in self.__air_objects.items():
             if v == air_object:
@@ -64,21 +67,14 @@ class AirEnv(Model):
         :return: dataframe with AirObject-s positions and ids (optional)
         """
         data = pd.DataFrame(columns=['id', 'x', 'y', 'z'])
-        for k in self.__air_objects.keys():
+        for ao_id, ao in self.__air_objects.items():
             data.loc[len(data)] = {
-                'id': k if self.__public_ids else -1,
-                'x': self.__air_objects[k].position()[0],
-                'y': self.__air_objects[k].position()[1],
-                'z': self.__air_objects[k].position()[2]
+                'id': ao_id,
+                'x': ao.position()[0],
+                'y': ao.position()[1],
+                'z': ao.position()[2]
             }
         return data
-
-    def set_public_ids(self, public_ids: bool) -> NoReturn:
-        """
-        Sets public_ids parameter to show/hide actual AirObject-s ids
-        :param public_ids: logical value to set
-        """
-        self.__public_ids = public_ids
 
     def __repr__(self) -> str:
         return '<AirEnv: len(air_objects)={}>'.format(len(self.__air_objects))

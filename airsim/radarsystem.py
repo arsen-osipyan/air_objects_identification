@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd
-from .model import Model
 from typing import NoReturn
+
+from .model import Model
 from .airenv import AirEnv
 
 
 class RadarSystem(Model):
 
-    def __init__(self, position: np.array, detection_radius: float, error: float) -> NoReturn:
+    def __init__(self, position: np.array, detection_radius: float, error: float, air_env: AirEnv = None) -> NoReturn:
         """
         Initializes RadarSystem
         :param position: position in R^3 (meters)
@@ -20,19 +21,26 @@ class RadarSystem(Model):
         self.__detection_radius = detection_radius
         self.__error = error
 
-        self.__air_env = None
+        self.__air_env = air_env
 
-        self.__data = pd.DataFrame(
-            columns=['detection_time', 'air_object_id', 'detection_id', 'detection_error',
-                     'air_object_x', 'air_object_y', 'air_object_z']
-        )
+        self.__data_dtypes = {
+            'time': 'int64',
+            'x': 'float64',
+            'x_err': 'float64',
+            'y': 'float64',
+            'y_err': 'float64',
+            'z': 'float64',
+            'z_err': 'float64',
+            'id': 'int64'
+        }
+        self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
 
-    def trigger(self) -> NoReturn:
+    def trigger(self, **kwargs) -> NoReturn:
         """
         Runs detect() method
         :return:
         """
-        super().trigger()
+        super().trigger(**kwargs)
 
         self.detect()
 
@@ -49,35 +57,27 @@ class RadarSystem(Model):
         """
         detections = self.__air_env.air_objects_dataframe()
 
-        detections['detection_time'] = self.time.get()
-        detections['detection_id'] = range(len(detections))
-        detections['detection_error'] = self.__error
+        detections['time'] = self.time.get()
+        detections['x_err'] = self.__error
+        detections['y_err'] = self.__error
+        detections['z_err'] = self.__error
 
-        pos = self.__position
-        rad = self.__detection_radius
+        p = self.__position
+        r = self.__detection_radius
         detections['is_observed'] = detections.apply(
-            lambda row: np.sqrt((row['x'] - pos[0])**2 + (row['y'] - pos[1])**2 + (row['z'] - pos[2])**2) <= rad,
+            lambda row: np.sqrt((row['x'] - p[0])**2 + (row['y'] - p[1])**2 + (row['z'] - p[2])**2) <= r,
             axis=1
         )
 
         detections = detections[detections['is_observed']]
 
-        detections['x'] = detections['x'] + self.__error * np.random.randn(len(detections))
-        detections['y'] = detections['y'] + self.__error * np.random.randn(len(detections))
-        detections['z'] = detections['z'] + self.__error * np.random.randn(len(detections))
+        detections['x'] = detections['x'] + np.random.uniform(-self.__error, self.__error, len(detections))
+        detections['y'] = detections['y'] + np.random.uniform(-self.__error, self.__error, len(detections))
+        detections['z'] = detections['z'] + np.random.uniform(-self.__error, self.__error, len(detections))
 
-        detections.rename(columns={
-            'id': 'air_object_id',
-            'x': 'air_object_x',
-            'y': 'air_object_y',
-            'z': 'air_object_z'
-        }, inplace=True)
+        detections.drop(columns=['is_observed'], inplace=True)
 
-        if len(self.__data) == 0:
-            self.__data = detections[['detection_time', 'air_object_id', 'detection_id', 'detection_error',
-                                      'air_object_x', 'air_object_y', 'air_object_z']]
-        else:
-            self.__data = pd.concat([self.__data, detections])
+        self.__concat_data(detections)
 
     def __is_observed(self, position: np.array) -> bool:
         """
@@ -88,22 +88,16 @@ class RadarSystem(Model):
         distance = np.sqrt(np.sum([(position[i] - self.__position[i])**2 for i in range(3)]))
         return distance <= self.__detection_radius
 
-    def attach_air_environment(self, air_env: AirEnv) -> NoReturn:
-        """
-        Attaches AirEnv if wasn't attached yet
-        :param air_env: AirEnv to attach
-        """
-        if self.__air_env is not None:
-            raise RuntimeError('AirEnv already attached to RadarSystem.')
-        self.__air_env = air_env
+    def __concat_data(self, df: pd.DataFrame) -> NoReturn:
+        df = df[list(self.__data_dtypes.keys())].astype(self.__data_dtypes)
+        if len(self.__data) == 0:
+            self.__data = df
+        else:
+            df.index += len(self.__data)
+            self.__data = pd.concat([self.__data, df])
 
-    def detach_air_environment(self) -> NoReturn:
-        """
-        Detaches AirEnv if it was attached
-        """
-        if self.__air_env is None:
-            raise RuntimeError('AirEnv is not attached to RadarSystem.')
-        self.__air_env = None
+    def set_air_environment(self, air_env: AirEnv = None) -> NoReturn:
+        self.__air_env = air_env
 
     def __repr__(self) -> str:
         return '<RadarSystem: position={}, detection_radius={}, error={}>'.format(
