@@ -2,9 +2,16 @@ import numpy as np
 import pandas as pd
 
 
-def identify_air_objects(df, c=11.35):
+def identify_air_objects(df: pd.DataFrame, c: float = 11.35) -> pd.Series:
+    """
+    Отождествление и идентификация записей обнаружений ВО
+    :param df: pd.DataFrame записями обнаружений
+    :param c: постоянная, влияющая на точность отождествления
+    :return: pd.Series с индексами исходного датафрейма и идентификаторами ВО
+    """
     new_segment_id = 0
     res = df.copy()
+    res.reset_index(inplace=True)
     res.loc[:, 'air_object_id'] = None
 
     for i in range(len(res) - 1):
@@ -39,15 +46,10 @@ def identify_air_objects(df, c=11.35):
                     max_segment, min_segment = max(i_segment, j_segment), min(i_segment, j_segment)
                     res.loc[res['air_object_id'] == max_segment, 'air_object_id'] = min_segment
 
-    return res
+    return res.set_index('index')['air_object_id']
 
 
 def check_air_object_ids(df: pd.DataFrame):
-    """
-
-    :param df:
-    :return:
-    """
     air_objects = dict()
     error = 0
 

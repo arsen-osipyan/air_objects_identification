@@ -3,6 +3,7 @@ from typing import NoReturn, List
 
 from .model import Model
 from .radarsystem import RadarSystem
+from .algorithms import identify_air_objects
 
 
 class ControlPoint(Model):
@@ -41,15 +42,11 @@ class ControlPoint(Model):
         super().trigger(**kwargs)
 
         self.upload_data()
-        self.identify_air_objects_alg()
-        # self.identify_air_objects_rnn()
 
-        # print(set(self.__data['detection_time']))
+    def identify_air_objects_alg(self) -> pd.Series:
+        return identify_air_objects(self.__data[self.__data['time'] == self.__data['time'].max()])
 
-    def identify_air_objects_alg(self) -> NoReturn:
-        last_detections_time = self.__data['time'].max()
-
-    def identify_air_objects_nn(self) -> NoReturn:
+    def identify_air_objects_nn(self) -> pd.Series:
         pass
 
     def upload_data(self) -> NoReturn:
@@ -71,8 +68,8 @@ class ControlPoint(Model):
         if len(self.__data) == 0:
             self.__data = df
         else:
-            df.index += len(self.__data)
             self.__data = pd.concat([self.__data, df])
+            self.__data.reset_index(inplace=True, drop=True)
 
     def is_attached(self, radar_system: RadarSystem) -> bool:
         return radar_system in self.__radar_systems.values()

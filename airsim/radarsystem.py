@@ -93,8 +93,8 @@ class RadarSystem(Model):
         if len(self.__data) == 0:
             self.__data = df
         else:
-            df.index += len(self.__data)
             self.__data = pd.concat([self.__data, df])
+            self.__data.reset_index(inplace=True, drop=True)
 
     def set_air_environment(self, air_env: AirEnv = None) -> NoReturn:
         self.__air_env = air_env
