@@ -3,7 +3,7 @@ from typing import NoReturn, List
 
 from .model import Model
 from .radarsystem import RadarSystem
-from .algorithms import identify_air_objects
+from ._algorithms import identify_air_objects
 
 
 class ControlPoint(Model):
@@ -21,15 +21,21 @@ class ControlPoint(Model):
             self.__radar_system_id_incr = len(radar_systems)
 
         self.__data_dtypes = {
-            'time': 'int64',
             'rs_id': 'int64',
-            'x': 'float64',
-            'x_err': 'float64',
-            'y': 'float64',
-            'y_err': 'float64',
-            'z': 'float64',
-            'z_err': 'float64',
             'id': 'int64',
+            'time': 'int64',
+            'x': 'float64',
+            'y': 'float64',
+            'z': 'float64',
+            'x_err': 'float64',
+            'y_err': 'float64',
+            'z_err': 'float64',
+            # 'v_x_est': 'float64',
+            # 'v_y_est': 'float64',
+            # 'v_z_est': 'float64',
+            # 'a_x_est': 'float64',
+            # 'a_y_est': 'float64',
+            # 'a_z_est': 'float64',
             'load_time': 'int64'
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
@@ -90,7 +96,7 @@ class ControlPoint(Model):
                 return k
 
     def get_data(self) -> pd.DataFrame:
-        return self.__data
+        return self.__data.copy()
 
     def __repr__(self) -> str:
         return '<ControlPoint: radar_systems={}>'.format(

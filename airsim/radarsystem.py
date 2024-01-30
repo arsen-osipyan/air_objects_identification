@@ -24,14 +24,20 @@ class RadarSystem(Model):
         self.__air_env = air_env
 
         self.__data_dtypes = {
+            'id': 'int64',
             'time': 'int64',
             'x': 'float64',
-            'x_err': 'float64',
             'y': 'float64',
-            'y_err': 'float64',
             'z': 'float64',
+            'x_err': 'float64',
+            'y_err': 'float64',
             'z_err': 'float64',
-            'id': 'int64'
+            # 'v_x_est': 'float64',
+            # 'v_y_est': 'float64',
+            # 'v_z_est': 'float64',
+            # 'a_x_est': 'float64',
+            # 'a_y_est': 'float64',
+            # 'a_z_est': 'float64'
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
 
@@ -42,42 +48,65 @@ class RadarSystem(Model):
         """
         super().trigger(**kwargs)
 
-        self.detect()
+        self.detect_air_objects()
+        # self.estimate_velocity()
+        # self.estimate_acceleration()
 
     def get_detections(self) -> pd.DataFrame:
         """
         Gives all collected detections
         :return: dataframe with detections
         """
-        return self.__data
+        return self.__data.copy()
 
-    def detect(self) -> NoReturn:
+    def detect_air_objects(self) -> NoReturn:
         """
         Detects all visible AirObject-s, adds error and updates detections dataframe
         """
+        # Get AirObjects' positions from observable AirEnv
         detections = self.__air_env.air_objects_dataframe()
 
-        detections['time'] = self.time.get()
-        detections['x_err'] = self.__error
-        detections['y_err'] = self.__error
-        detections['z_err'] = self.__error
-
+        # Filter AirObjects with not observable positions
         p = self.__position
         r = self.__detection_radius
         detections['is_observed'] = detections.apply(
-            lambda row: np.sqrt((row['x'] - p[0])**2 + (row['y'] - p[1])**2 + (row['z'] - p[2])**2) <= r,
+            lambda row: np.sqrt((row['x'] - p[0]) ** 2 + (row['y'] - p[1]) ** 2 + (row['z'] - p[2]) ** 2) <= r,
             axis=1
         )
-
         detections = detections[detections['is_observed']]
+        detections.drop(columns=['is_observed'], inplace=True)
 
+        # Add / edit columns
+        detections['time'] = self.time.get()
         detections['x'] = detections['x'] + np.random.uniform(-self.__error, self.__error, len(detections))
         detections['y'] = detections['y'] + np.random.uniform(-self.__error, self.__error, len(detections))
         detections['z'] = detections['z'] + np.random.uniform(-self.__error, self.__error, len(detections))
+        detections['x_err'] = self.__error
+        detections['y_err'] = self.__error
+        detections['z_err'] = self.__error
+        detections['v_x_est'] = None
+        detections['v_y_est'] = None
+        detections['v_z_est'] = None
+        detections['a_x_est'] = None
+        detections['a_y_est'] = None
+        detections['a_z_est'] = None
 
-        detections.drop(columns=['is_observed'], inplace=True)
-
+        # Concat new detections with data
         self.__concat_data(detections)
+
+    def estimate_velocity(self) -> NoReturn:
+        for ao_id in list(set(self.__data['id'])):
+            for axis in ('x', 'y', 'z'):
+                axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[axis].diff()
+                t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff() / 1000
+                self.__data.loc[self.__data['id'] == ao_id, f'v_{axis}_est'] = axis_diff / t_diff
+
+    def estimate_acceleration(self) -> NoReturn:
+        for ao_id in list(set(self.__data['id'])):
+            for axis in ('x', 'y', 'z'):
+                axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[f'v_{axis}_est'].diff()
+                t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff() / 1000
+                self.__data.loc[self.__data['id'] == ao_id, f'a_{axis}_est'] = axis_diff / t_diff
 
     def __is_observed(self, position: np.array) -> bool:
         """
