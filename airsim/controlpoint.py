@@ -30,12 +30,12 @@ class ControlPoint(Model):
             'x_err': 'float64',
             'y_err': 'float64',
             'z_err': 'float64',
-            # 'v_x_est': 'float64',
-            # 'v_y_est': 'float64',
-            # 'v_z_est': 'float64',
-            # 'a_x_est': 'float64',
-            # 'a_y_est': 'float64',
-            # 'a_z_est': 'float64',
+            'v_x_est': 'float64',
+            'v_y_est': 'float64',
+            'v_z_est': 'float64',
+            'a_x_est': 'float64',
+            'a_y_est': 'float64',
+            'a_z_est': 'float64',
             'load_time': 'int64'
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
