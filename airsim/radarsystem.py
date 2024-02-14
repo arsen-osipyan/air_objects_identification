@@ -99,14 +99,14 @@ class RadarSystem(Model):
             for axis in ('x', 'y', 'z'):
                 axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[axis].diff()
                 t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
-                self.__data.loc[self.__data['id'] == ao_id, f'v_{axis}_est'] = axis_diff / t_diff
+                self.__data.loc[self.__data['id'] == ao_id & self.__data[f'v_{axis}_est'].isna(), f'v_{axis}_est'] = axis_diff / t_diff
 
     def estimate_acceleration(self) -> NoReturn:
         for ao_id in list(set(self.__data['id'])):
             for axis in ('x', 'y', 'z'):
                 axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[f'v_{axis}_est'].diff()
                 t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
-                self.__data.loc[self.__data['id'] == ao_id, f'a_{axis}_est'] = axis_diff / t_diff
+                self.__data.loc[self.__data['id'] == ao_id & self.__data[f'a_{axis}_est'].isna(), f'a_{axis}_est'] = axis_diff / t_diff
 
     def __is_observed(self, position: np.array) -> bool:
         """
