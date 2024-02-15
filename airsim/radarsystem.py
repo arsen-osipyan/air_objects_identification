@@ -49,8 +49,6 @@ class RadarSystem(Model):
         super().trigger(**kwargs)
 
         self.detect_air_objects()
-        self.estimate_velocity()
-        self.estimate_acceleration()
 
     def get_detections(self) -> pd.DataFrame:
         """
