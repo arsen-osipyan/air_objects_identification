@@ -1,33 +1,42 @@
+import pandas as pd
+from tqdm import tqdm
+from typing import List, NoReturn
+
 from .time import Time
+from .collections import AirObject, AirEnv, RadarSystem, ControlPoint
 
 
 class Supervisor:
 
-    def __init__(self):
-        self.__air_env = None
-        self.__radar_systems = []
-        self.__control_point = None
-
-    def attach_air_environment(self, air_env):
-        self.__air_env = air_env
-
-    def attach_radar_systems(self, radar_systems):
+    def __init__(self, air_objects: List[AirObject] = None, radar_systems: List[RadarSystem] = None) -> NoReturn:
+        self.__air_objects = air_objects
+        self.__air_env = AirEnv(air_objects=self.__air_objects)
         self.__radar_systems = radar_systems
+        for rs in self.__radar_systems:
+            rs.set_air_environment(self.__air_env)
+        self.__control_point = ControlPoint(radar_systems=self.__radar_systems)
 
-    def attach_control_point(self, control_point):
-        self.__control_point = control_point
-
-    def trigger_models(self):
-        self.__air_env.trigger()
-        for i in range(len(self.__radar_systems)):
-            self.__radar_systems[i].trigger()
-        self.__control_point.trigger()
-
-    def run(self, t_min, t_max, dt):
+    def run(self, t_min: int, t_max: int, dt: int) -> NoReturn:
         t = Time()
         t.set(t_min)
 
-        while t.get() <= t_max:
-            self.trigger_models()
+        progressbar = tqdm(range(t_min, t_max + 1, dt), ncols=100)
+        progressbar.set_description('Running system')
+        for _ in progressbar:
+            for radar_system in self.__radar_systems:
+                radar_system.trigger()
 
             t.step(dt)
+
+        for radar_system in self.__radar_systems:
+            radar_system.estimate_velocity()
+            radar_system.estimate_acceleration()
+        self.__control_point.upload_data()
+
+    def get_data(self) -> pd.DataFrame:
+        return self.__control_point.get_data()
+
+    def clear_data(self) -> NoReturn:
+        self.__control_point.clear_data()
+        for rs in self.__radar_systems:
+            rs.clear_data()

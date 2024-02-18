@@ -9,12 +9,6 @@ from .airenv import AirEnv
 class RadarSystem(Model):
 
     def __init__(self, position: np.array, detection_radius: float, error: float, air_env: AirEnv = None) -> NoReturn:
-        """
-        Initializes RadarSystem
-        :param position: position in R^3 (meters)
-        :param detection_radius: detection radius (meters)
-        :param error: detection absolute error for each dimension (meters)
-        """
         super().__init__()
 
         self.__position = np.array(position, dtype=float)
@@ -42,25 +36,11 @@ class RadarSystem(Model):
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
 
     def trigger(self, **kwargs) -> NoReturn:
-        """
-        Runs detect() method
-        :return:
-        """
         super().trigger(**kwargs)
 
         self.detect_air_objects()
 
-    def get_detections(self) -> pd.DataFrame:
-        """
-        Gives all collected detections
-        :return: dataframe with detections
-        """
-        return self.__data.copy()
-
     def detect_air_objects(self) -> NoReturn:
-        """
-        Detects all visible AirObject-s, adds error and updates detections dataframe
-        """
         # Get AirObjects' positions from observable AirEnv
         detections = self.__air_env.air_objects_dataframe()
 
@@ -107,11 +87,6 @@ class RadarSystem(Model):
                 self.__data.loc[self.__data['id'] == ao_id & self.__data[f'a_{axis}_est'].isna(), f'a_{axis}_est'] = axis_diff / t_diff
 
     def __is_observed(self, position: np.array) -> bool:
-        """
-        Checks if provided point could be observed from this RadarSystem
-        :param position: point position in R^3 (meters)
-        :return: is this point observed from RadarSystem
-        """
         distance = np.sqrt(np.sum([(position[i] - self.__position[i])**2 for i in range(3)]))
         return distance <= self.__detection_radius
 
@@ -122,6 +97,12 @@ class RadarSystem(Model):
         else:
             self.__data = pd.concat([self.__data, df])
             self.__data.reset_index(inplace=True, drop=True)
+
+    def get_data(self) -> pd.DataFrame:
+        return self.__data.copy()
+
+    def clear_data(self) -> NoReturn:
+        self.__data = self.__data.iloc[0:0]
 
     def set_air_environment(self, air_env: AirEnv = None) -> NoReturn:
         self.__air_env = air_env

@@ -59,7 +59,7 @@ class ControlPoint(Model):
         current_time = self.time.get()
 
         for k, v in self.__radar_systems.items():
-            rs_data = v.get_detections()
+            rs_data = v.get_data()
             if self.__last_load_time is not None:
                 rs_data = rs_data[rs_data['time'] > self.__last_load_time]
             if len(rs_data) != 0:
@@ -97,6 +97,9 @@ class ControlPoint(Model):
 
     def get_data(self) -> pd.DataFrame:
         return self.__data.copy()
+
+    def clear_data(self) -> NoReturn:
+        self.__data = self.__data.iloc[0:0]
 
     def __repr__(self) -> str:
         return '<ControlPoint: radar_systems={}>'.format(
