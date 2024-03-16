@@ -19,14 +19,12 @@ class AirEnv(Model):
             self.__air_objects = {i: air_objects[i] for i in range(len(air_objects))}
             self.__air_object_id_incr = len(air_objects)
 
-    def trigger(self, **kwargs) -> NoReturn:
+    def trigger(self) -> NoReturn:
         """
         Runs trigger() method of all attached AirObject-s
         """
-        super().trigger(**kwargs)
-
         for ao_id, ao in self.__air_objects.items():
-            ao.trigger(**kwargs)
+            ao.trigger()
 
     def is_attached(self, air_object: AirObject) -> bool:
         """

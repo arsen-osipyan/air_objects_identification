@@ -2,10 +2,9 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-from typing import NoReturn, List
+from typing import NoReturn
 
-from airsim.collections import AirObject, AirEnv, RadarSystem, ControlPoint, Supervisor
-from airsim.time import Time
+from airsim.collections import AirObject, RadarSystem, Supervisor
 
 
 class DataGenerator:

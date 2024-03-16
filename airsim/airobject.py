@@ -15,8 +15,8 @@ class AirObject(Model):
 
         self.__track = track
 
-    def trigger(self, **kwargs) -> NoReturn:
-        super().trigger(**kwargs)
+    def trigger(self) -> NoReturn:
+        pass
 
     def position(self) -> np.array:
         return list(map(float, self.__track(self.time.get())))

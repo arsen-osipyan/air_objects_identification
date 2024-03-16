@@ -8,8 +8,14 @@ from .airenv import AirEnv
 
 class RadarSystem(Model):
 
-    def __init__(self, position: np.array, detection_radius: float, error: float, air_env: AirEnv = None) -> NoReturn:
+    def __init__(self, position: np.array, detection_radius: float, error: float, air_env: AirEnv = None,
+                 detection_fault_probability: float = 0.0, detection_period: int = 100,
+                 detection_delay: int = 0) -> NoReturn:
         super().__init__()
+
+        self.__detection_fault_probability = detection_fault_probability
+        self.__detection_period = detection_period
+        self.__detection_delay = detection_delay % detection_period
 
         self.__position = np.array(position, dtype=float)
         self.__detection_radius = detection_radius
@@ -35,10 +41,11 @@ class RadarSystem(Model):
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
 
-    def trigger(self, **kwargs) -> NoReturn:
-        super().trigger(**kwargs)
-
-        self.detect_air_objects()
+    def trigger(self) -> NoReturn:
+        if self.time.get() % self.__detection_period == self.__detection_delay:
+            if np.random.choice([False, True],
+                                p=[self.__detection_fault_probability, 1.0 - self.__detection_fault_probability]):
+                self.detect_air_objects()
 
     def detect_air_objects(self) -> NoReturn:
         # Get AirObjects' positions from observable AirEnv
@@ -77,14 +84,14 @@ class RadarSystem(Model):
             for axis in ('x', 'y', 'z'):
                 axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[axis].diff()
                 t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
-                self.__data.loc[self.__data['id'] == ao_id & self.__data[f'v_{axis}_est'].isna(), f'v_{axis}_est'] = axis_diff / t_diff
+                self.__data.loc[self.__data['id'] == ao_id, f'v_{axis}_est'] = axis_diff / t_diff
 
     def estimate_acceleration(self) -> NoReturn:
         for ao_id in list(set(self.__data['id'])):
             for axis in ('x', 'y', 'z'):
                 axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[f'v_{axis}_est'].diff()
                 t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
-                self.__data.loc[self.__data['id'] == ao_id & self.__data[f'a_{axis}_est'].isna(), f'a_{axis}_est'] = axis_diff / t_diff
+                self.__data.loc[self.__data['id'] == ao_id, f'a_{axis}_est'] = axis_diff / t_diff
 
     def __is_observed(self, position: np.array) -> bool:
         distance = np.sqrt(np.sum([(position[i] - self.__position[i])**2 for i in range(3)]))
@@ -104,8 +111,14 @@ class RadarSystem(Model):
     def clear_data(self) -> NoReturn:
         self.__data = self.__data.iloc[0:0]
 
-    def set_air_environment(self, air_env: AirEnv = None) -> NoReturn:
+    def set_air_environment(self, air_env: AirEnv) -> NoReturn:
         self.__air_env = air_env
+
+    def set_detection_fault_probability(self, detection_fault_probability: float) -> NoReturn:
+        self.__detection_fault_probability = detection_fault_probability
+
+    def set_detection_period(self, detection_period: int) -> NoReturn:
+        self.__detection_period = detection_period
 
     def __repr__(self) -> str:
         return '<RadarSystem: position={}, detection_radius={}, error={}>'.format(

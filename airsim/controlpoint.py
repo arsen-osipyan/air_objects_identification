@@ -1,18 +1,20 @@
+import numpy as np
 import pandas as pd
 from typing import NoReturn, List
 
 from .model import Model
 from .radarsystem import RadarSystem
-from ._algorithms import identify_air_objects
 
 
 class ControlPoint(Model):
 
-    def __init__(self, radar_systems: List[RadarSystem] = None) -> NoReturn:
-        """
-        Initializes ControlPoint
-        """
+    def __init__(self, radar_systems: List[RadarSystem] = None, uploading_period: int = 10000,
+                 uploading_delay: int = 0) -> NoReturn:
         super().__init__()
+
+        self.__uploading_period = uploading_period
+        self.__uploading_delay = uploading_delay % uploading_period
+
         self.__radar_systems = dict()
         self.__radar_system_id_incr = 0
 
@@ -41,24 +43,19 @@ class ControlPoint(Model):
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
         self.__last_load_time = None
     
-    def trigger(self, **kwargs) -> NoReturn:
+    def trigger(self) -> NoReturn:
         """
         Runs upload_data() method
         """
-        super().trigger(**kwargs)
-
-        self.upload_data()
-
-    def identify_air_objects_alg(self) -> pd.Series:
-        return identify_air_objects(self.__data[self.__data['time'] == self.__data['time'].max()])
-
-    def identify_air_objects_nn(self) -> pd.Series:
-        pass
+        if self.time.get() % self.__uploading_period == self.__uploading_delay:
+            self.upload_data()
 
     def upload_data(self) -> NoReturn:
         current_time = self.time.get()
 
         for k, v in self.__radar_systems.items():
+            v.estimate_velocity()
+            v.estimate_acceleration()
             rs_data = v.get_data()
             if self.__last_load_time is not None:
                 rs_data = rs_data[rs_data['time'] > self.__last_load_time]
@@ -100,6 +97,7 @@ class ControlPoint(Model):
 
     def clear_data(self) -> NoReturn:
         self.__data = self.__data.iloc[0:0]
+        self.__last_load_time = None
 
     def __repr__(self) -> str:
         return '<ControlPoint: radar_systems={}>'.format(

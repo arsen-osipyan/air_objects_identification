@@ -26,6 +26,6 @@ class Time:
         # print(f'Time set: {self.__t}ms -> {t}ms')
         self.__t = t
 
-    def step(self, dt: int) -> NoReturn:
+    def step(self, dt: int = 1) -> NoReturn:
         # print(f'Time step: {self.__t}ms -> {self.__t + dt}ms (+{dt}ms)')
         self.__t += dt
