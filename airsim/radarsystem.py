@@ -32,12 +32,12 @@ class RadarSystem(Model):
             'x_err': 'float64',
             'y_err': 'float64',
             'z_err': 'float64',
-            'v_x_est': 'float64',
-            'v_y_est': 'float64',
-            'v_z_est': 'float64',
-            'a_x_est': 'float64',
-            'a_y_est': 'float64',
-            'a_z_est': 'float64'
+            # 'v_x_est': 'float64',
+            # 'v_y_est': 'float64',
+            # 'v_z_est': 'float64',
+            # 'a_x_est': 'float64',
+            # 'a_y_est': 'float64',
+            # 'a_z_est': 'float64'
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
 
@@ -69,29 +69,31 @@ class RadarSystem(Model):
         detections['x_err'] = self.__error
         detections['y_err'] = self.__error
         detections['z_err'] = self.__error
-        detections['v_x_est'] = None
-        detections['v_y_est'] = None
-        detections['v_z_est'] = None
-        detections['a_x_est'] = None
-        detections['a_y_est'] = None
-        detections['a_z_est'] = None
+        # detections['v_x_est'] = None
+        # detections['v_y_est'] = None
+        # detections['v_z_est'] = None
+        # detections['a_x_est'] = None
+        # detections['a_y_est'] = None
+        # detections['a_z_est'] = None
 
         # Concat new detections with data
         self.__concat_data(detections)
 
     def estimate_velocity(self) -> NoReturn:
-        for ao_id in list(set(self.__data['id'])):
-            for axis in ('x', 'y', 'z'):
-                axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[axis].diff()
-                t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
-                self.__data.loc[self.__data['id'] == ao_id, f'v_{axis}_est'] = axis_diff / t_diff
+        pass
+        # for ao_id in list(set(self.__data['id'])):
+        #     for axis in ('x', 'y', 'z'):
+        #         axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[axis].diff()
+        #         t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
+        #         self.__data.loc[self.__data['id'] == ao_id, f'v_{axis}_est'] = axis_diff / t_diff
 
     def estimate_acceleration(self) -> NoReturn:
-        for ao_id in list(set(self.__data['id'])):
-            for axis in ('x', 'y', 'z'):
-                axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[f'v_{axis}_est'].diff()
-                t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
-                self.__data.loc[self.__data['id'] == ao_id, f'a_{axis}_est'] = axis_diff / t_diff
+        pass
+        # for ao_id in list(set(self.__data['id'])):
+        #     for axis in ('x', 'y', 'z'):
+        #         axis_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')[f'v_{axis}_est'].diff()
+        #         t_diff = self.__data.loc[self.__data['id'] == ao_id].sort_values('time')['time'].diff()
+        #         self.__data.loc[self.__data['id'] == ao_id, f'a_{axis}_est'] = axis_diff / t_diff
 
     def __is_observed(self, position: np.array) -> bool:
         distance = np.sqrt(np.sum([(position[i] - self.__position[i])**2 for i in range(3)]))

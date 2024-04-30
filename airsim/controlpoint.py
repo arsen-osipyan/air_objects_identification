@@ -4,6 +4,8 @@ from typing import NoReturn, List
 
 from .model import Model
 from .radarsystem import RadarSystem
+from .nn.models import SiameseNetwork, ContrastiveLoss
+from .nn.algorithm import nn_identify_air_objects
 
 
 class ControlPoint(Model):
@@ -32,12 +34,13 @@ class ControlPoint(Model):
             'x_err': 'float64',
             'y_err': 'float64',
             'z_err': 'float64',
-            'v_x_est': 'float64',
-            'v_y_est': 'float64',
-            'v_z_est': 'float64',
-            'a_x_est': 'float64',
-            'a_y_est': 'float64',
-            'a_z_est': 'float64',
+            # 'v_x_est': 'float64',
+            # 'v_y_est': 'float64',
+            # 'v_z_est': 'float64',
+            # 'a_x_est': 'float64',
+            # 'a_y_est': 'float64',
+            # 'a_z_est': 'float64',
+            'air_object_id': 'int64',
             'load_time': 'int64'
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
@@ -49,6 +52,9 @@ class ControlPoint(Model):
         """
         if self.time.get() % self.__uploading_period == self.__uploading_delay:
             self.upload_data()
+
+    def identify_air_objects(self):
+        nn_identify_air_objects(self.__data)
 
     def upload_data(self) -> NoReturn:
         current_time = self.time.get()
@@ -62,6 +68,7 @@ class ControlPoint(Model):
             if len(rs_data) != 0:
                 rs_data.loc[:, ['load_time']] = int(current_time)
                 rs_data.loc[:, ['rs_id']] = int(k)
+                rs_data.loc[:, ['air_object_id']] = -1
                 self.__concat_data(rs_data)
 
         self.__last_load_time = current_time

@@ -1,5 +1,5 @@
-*.csv
-*.png
-*.pt
-*-checkpoint.*
-*.xml
+airsim/nn/CP_data/*
+airsim/nn/data
+
+.idea/
+.ipynb_checkpoints/

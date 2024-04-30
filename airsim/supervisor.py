@@ -37,11 +37,13 @@ class Supervisor:
             t.step(dt)
 
         self.__control_point.upload_data()
+        self.__control_point.identify_air_objects()
 
     def get_data(self) -> pd.DataFrame:
         return self.__control_point.get_data()
 
     def clear_data(self) -> NoReturn:
         self.__control_point.clear_data()
+
         for rs in self.__radar_systems:
             rs.clear_data()
