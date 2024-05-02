@@ -1,11 +1,9 @@
-import numpy as np
 import pandas as pd
 from typing import NoReturn, List
 
 from .model import Model
 from .radarsystem import RadarSystem
-from .nn.models import SiameseNetwork, ContrastiveLoss
-from .nn.algorithm import nn_identify_air_objects
+from .algorithms import identify_air_objects_nn, identify_air_objects_determined
 
 
 class ControlPoint(Model):
@@ -34,12 +32,6 @@ class ControlPoint(Model):
             'x_err': 'float64',
             'y_err': 'float64',
             'z_err': 'float64',
-            # 'v_x_est': 'float64',
-            # 'v_y_est': 'float64',
-            # 'v_z_est': 'float64',
-            # 'a_x_est': 'float64',
-            # 'a_y_est': 'float64',
-            # 'a_z_est': 'float64',
             'air_object_id': 'int64',
             'load_time': 'int64'
         }
@@ -47,21 +39,19 @@ class ControlPoint(Model):
         self.__last_load_time = None
     
     def trigger(self) -> NoReturn:
-        """
-        Runs upload_data() method
-        """
         if self.time.get() % self.__uploading_period == self.__uploading_delay:
             self.upload_data()
 
-    def identify_air_objects(self):
-        nn_identify_air_objects(self.__data)
+    def identify_air_objects_nn(self):
+        identify_air_objects_nn(self.__data)
+
+    def identify_air_objects_determined(self):
+        identify_air_objects_determined(self.__data)
 
     def upload_data(self) -> NoReturn:
         current_time = self.time.get()
 
         for k, v in self.__radar_systems.items():
-            v.estimate_velocity()
-            v.estimate_acceleration()
             rs_data = v.get_data()
             if self.__last_load_time is not None:
                 rs_data = rs_data[rs_data['time'] > self.__last_load_time]
@@ -72,6 +62,21 @@ class ControlPoint(Model):
                 self.__concat_data(rs_data)
 
         self.__last_load_time = current_time
+
+        self.__extend_tracks_ids()
+
+    def __extend_tracks_ids(self):
+        for rs_id in self.__data['rs_id'].unique():
+            for id in self.__data[self.__data['rs_id'] == rs_id]['id'].unique():
+                ao_ids = self.__data[(self.__data['rs_id'] == rs_id) &
+                                     (self.__data['id'] == id)]['air_object_id'].unique()
+
+                if len(ao_ids) >= 2 and -1 not in ao_ids:
+                    raise RuntimeError(f'identification error, track ({rs_id}, {id}) has multiple ids - {ao_ids}')
+
+                if len(ao_ids) == 2:
+                    self.__data.loc[(self.__data['rs_id'] == rs_id) & (self.__data['id'] == id) &
+                                    (self.__data['air_object_id'] == -1), 'air_object_id'] = max(ao_ids)
 
     def __concat_data(self, df: pd.DataFrame) -> NoReturn:
         df = df[list(self.__data_dtypes.keys())].astype(self.__data_dtypes)

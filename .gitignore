@@ -1,4 +1,4 @@
-airsim/nn/CP_data/*
+airsim/nn/CP_data
 airsim/nn/data
 
 .idea/

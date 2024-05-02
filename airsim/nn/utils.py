@@ -54,8 +54,10 @@ def extend_track_with_zeros(track, track_length, zeros_placement='start'):
 
 
 def extend_track_with_linear_interpolation(track, track_length):
-    if track.size(0) < 2 or track_length == 0:
+    if track.size(0) == 0 or track_length == 0:
         return None
+    if track.size(0) == 1:
+        return track.repeat(track_length, 1)
     if track.size(0) >= track_length:
         return track[:track_length, :]
 
