@@ -148,8 +148,10 @@ def identify_air_objects_nn(data):
                                           (tracks_distances['rs_id_2'] == rs_id_2)][['id_1', 'id_2', 'dist']]
                          .sort_values(by=['dist']).reset_index(drop=True))
             print(distances)
+            distances = distances[distances['dist'] < 1.0]
             identified_pairs, sum_dist = get_identified_pairs(distances)
             print(rs_id_1, rs_id_2, identified_pairs, sum_dist)
+            print()
             for pair in identified_pairs:
                 tracks_distances.loc[(tracks_distances['rs_id_1'] == rs_id_1) &
                                      (tracks_distances['id_1'] == pair[0]) &

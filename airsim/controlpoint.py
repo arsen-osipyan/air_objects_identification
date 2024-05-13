@@ -1,3 +1,4 @@
+import time
 import pandas as pd
 from typing import NoReturn, List
 
@@ -43,7 +44,10 @@ class ControlPoint(Model):
             self.upload_data()
 
     def identify_air_objects_nn(self):
+        start_time = time.time()
         identify_air_objects_nn(self.__data)
+        end_time = time.time()
+        print('Elapsed time: ', end_time - start_time)
 
     def identify_air_objects_determined(self):
         identify_air_objects_determined(self.__data)
