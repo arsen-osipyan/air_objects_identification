@@ -107,8 +107,8 @@ def generate_siamese_data_from_cp_data_dir(dir_name, track_length):
     for file in os.listdir(dir_name):
         f = os.path.join(dir_name, file)
         if os.path.isfile(f) and f.endswith('.csv'):
-            print(f' - file {file}', end=' ')
-            x_cur, y_cur = generate_siamese_data_from_cp_data_file(file, track_length)
+            print(f' - file {f}', end=' ')
+            x_cur, y_cur = generate_siamese_data_from_cp_data_file(f, track_length)
             print(f'({x_cur.size(0)} rows)')
 
             x = torch.cat((x, x_cur), 0)
