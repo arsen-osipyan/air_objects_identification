@@ -3,29 +3,9 @@ import pandas as pd
 
 from airsim.nn.models import SiameseNetwork
 from airsim.nn.hparams import config
-from airsim.nn.utils import (get_tracks_timeranges_intersection,
-                             extend_track_with_linear_interpolation,
-                             transform_cp_data)
-
-
-def find_connected_components(graph):
-    visited = set()
-    components = []
-
-    def dfs(vertex, component):
-        component.append(vertex)
-        visited.add(vertex)
-        for neighbor in graph[vertex]:
-            if neighbor not in visited:
-                dfs(neighbor, component)
-
-    for vertex in graph:
-        if vertex not in visited:
-            component = []
-            dfs(vertex, component)
-            components.append(component)
-
-    return components
+from airsim.utils import get_tracks_timeranges_intersection
+from airsim.nn.utils import extend_track_with_linear_interpolation
+from airsim.identification.utils import get_identified_pairs, find_connected_components
 
 
 def compute_distance_between_tracks(track_1, track_2, model_filename='airsim/nn/model.pt'):
@@ -43,8 +23,8 @@ def compute_distance_between_tracks(track_1, track_2, model_filename='airsim/nn/
         return
 
     # crop tracks to current max time
-    track_1 = track_1[track_1['time'] < t_max]
-    track_2 = track_2[track_2['time'] < t_max]
+    track_1 = track_1[track_1['time'] <= t_max]
+    track_2 = track_2[track_2['time'] <= t_max]
 
     # get last parts of tracks
     track_1 = track_1.tail(config['track_length'])
@@ -68,39 +48,6 @@ def compute_distance_between_tracks(track_1, track_2, model_filename='airsim/nn/
     dist = torch.nn.functional.pairwise_distance(out_1, out_2, keepdim=True)
 
     return dist.item()
-
-
-def get_identified_pairs(distances, start_with_row=0):
-    min_pairs = []
-    min_dist = distances['dist'].max() * len(distances)
-
-    for i in range(len(distances)):
-        start_with_row = i
-        distances['used'] = False
-        cur_pairs = []
-        cur_dist = 0
-
-        while len(distances[~distances['used']]) != 0:
-            row = distances[~distances['used']].iloc[start_with_row]
-
-            start_with_row = 0
-
-            cur_pairs.append((row['id_1'], row['id_2']))
-            cur_dist += row['dist']
-
-            if cur_dist > min_dist:
-                break
-
-            distances.loc[distances['id_1'] == row['id_1'], 'used'] = True
-            distances.loc[distances['id_2'] == row['id_2'], 'used'] = True
-
-        if cur_dist < min_dist:
-            min_dist = cur_dist
-            min_pairs = cur_pairs.copy()
-
-        distances.drop(columns=['used'])
-
-    return min_pairs, min_dist
 
 
 def identify_air_objects_nn(data):
@@ -147,11 +94,10 @@ def identify_air_objects_nn(data):
             distances = (tracks_distances[(tracks_distances['rs_id_1'] == rs_id_1) &
                                           (tracks_distances['rs_id_2'] == rs_id_2)][['id_1', 'id_2', 'dist']]
                          .sort_values(by=['dist']).reset_index(drop=True))
-            print(distances)
+
             distances = distances[distances['dist'] < 1.0]
             identified_pairs, sum_dist = get_identified_pairs(distances)
-            print(rs_id_1, rs_id_2, identified_pairs, sum_dist)
-            print()
+
             for pair in identified_pairs:
                 tracks_distances.loc[(tracks_distances['rs_id_1'] == rs_id_1) &
                                      (tracks_distances['id_1'] == pair[0]) &
@@ -185,7 +131,3 @@ def identify_air_objects_nn(data):
             new_ao_id = min(ao_ids_unique)
             for track in ao_ids.keys():
                 data.loc[(data['rs_id'] == track[0]) & (data['id'] == track[1]), 'air_object_id'] = new_ao_id
-
-
-def identify_air_objects_determined(data):
-    return

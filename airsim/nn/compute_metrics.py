@@ -1,9 +1,4 @@
-import datetime
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import torch
-from tqdm import tqdm, trange
 
 from models import SiameseDataset, SiameseNetwork, ContrastiveLoss
 from hparams import config

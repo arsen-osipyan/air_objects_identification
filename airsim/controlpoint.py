@@ -4,13 +4,14 @@ from typing import NoReturn, List
 
 from .model import Model
 from .radarsystem import RadarSystem
-from .algorithms import identify_air_objects_nn, identify_air_objects_determined
+from airsim.identification.nn import identify_air_objects_nn
+from airsim.identification.determined import identify_air_objects_determined
 
 
 class ControlPoint(Model):
 
     def __init__(self, radar_systems: List[RadarSystem] = None, uploading_period: int = 10000,
-                 uploading_delay: int = 0) -> NoReturn:
+                 uploading_delay: int = 0, identification_method: str = 'determined') -> NoReturn:
         super().__init__()
 
         self.__uploading_period = uploading_period
@@ -38,19 +39,32 @@ class ControlPoint(Model):
         }
         self.__data = pd.DataFrame(columns=list(self.__data_dtypes.keys())).astype(self.__data_dtypes)
         self.__last_load_time = None
+
+        self.__identification_method = identification_method
     
     def trigger(self) -> NoReturn:
         if self.time.get() % self.__uploading_period == self.__uploading_delay:
             self.upload_data()
 
+    def identify_air_objects(self):
+        if self.__identification_method == 'determined':
+            self.identify_air_objects_determined()
+        elif self.__identification_method == 'nn':
+            self.identify_air_objects_nn()
+
     def identify_air_objects_nn(self):
+        print('Running ControlPoint.identify_air_objects_nn()')
         start_time = time.time()
         identify_air_objects_nn(self.__data)
         end_time = time.time()
-        print('Elapsed time: ', end_time - start_time)
+        print('- elapsed time: {:.4f} seconds'.format(end_time - start_time))
 
     def identify_air_objects_determined(self):
+        print('Running ControlPoint.identify_air_objects_determined()')
+        start_time = time.time()
         identify_air_objects_determined(self.__data)
+        end_time = time.time()
+        print('- elapsed time: {:.4f} seconds'.format(end_time - start_time))
 
     def upload_data(self) -> NoReturn:
         current_time = self.time.get()
@@ -114,6 +128,12 @@ class ControlPoint(Model):
     def clear_data(self) -> NoReturn:
         self.__data = self.__data.iloc[0:0]
         self.__last_load_time = None
+
+    def clear_identification(self):
+        self.__data.loc[:, 'air_object_id'] = -1
+
+    def set_identification_method(self, identification_method):
+        self.__identification_method = identification_method
 
     def __repr__(self) -> str:
         return '<ControlPoint: radar_systems={}>'.format(

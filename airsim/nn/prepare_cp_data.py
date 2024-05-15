@@ -1,11 +1,7 @@
 import datetime
 import numpy as np
-import pandas as pd
 
-from tqdm import tqdm, trange
-
-from airsim.collections import AirObject, AirEnv, RadarSystem, ControlPoint, Supervisor
-from airsim.time import Time
+from airsim.collections import AirObject, AirEnv, RadarSystem, Supervisor
 
 
 def save_cp_data(cp_data, cp_data_dir, data_usage_aim):

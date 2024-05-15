@@ -11,8 +11,10 @@ dt = 250
 
 supervisor = Supervisor(
     air_env=AirEnv(air_objects=[
-        AirObject(track=lambda t: np.array([-50000 + 0.4 * t, 2, 30000])),
-        AirObject(track=lambda t: np.array([-50000 + 0.4 * t, -3, 30000])),
+        # AirObject(track=lambda t: np.array([-50000 + 0.2 * t + 0.15 * t**2 / 625000, 200, 30000])),
+        # AirObject(track=lambda t: np.array([-50000 + 0.2 * t + 0.10 * t**2 / 625000, -200, 30000])),
+        AirObject(track=lambda t: np.array([-50000 + 0.2 * t, 10, 30000])),
+        AirObject(track=lambda t: np.array([-50000 + 0.2 * t, -10, 30000])),
     ]),
     radar_systems=[
         RadarSystem(position=np.array([0, 0, 0]),
@@ -39,7 +41,8 @@ supervisor = Supervisor(
                     detection_fault_probability=0.01,
                     detection_period=1000,
                     detection_delay=np.random.randint(0, 250//dt) * dt),
-    ]
+    ],
+    identification_method='determined'
 )
 
 supervisor.run(t_min, t_max, dt)
@@ -48,21 +51,7 @@ cp_data = supervisor.get_data()
 
 print(cp_data)
 
-
-def can_build_one_to_one_mapping(arr1, arr2):
-    if len(arr1) != len(arr2):
-        return False
-
-    mapping = {}
-
-    for i in range(len(arr1)):
-        if arr1[i] in mapping:
-            if mapping[arr1[i]] != arr2[i]:
-                return False
-        else:
-            mapping[arr1[i]] = arr2[i]
-
-    return True
-
-
-print(can_build_one_to_one_mapping(cp_data['id'], cp_data['air_object_id']))
+for rs_id in cp_data['rs_id'].unique():
+    for id in cp_data[cp_data['rs_id'] == rs_id]['id'].unique():
+        print(f'radar_system: {rs_id}, air_object: {id}, ids: ', end='')
+        print(cp_data[(cp_data['rs_id'] == rs_id) & (cp_data['id'] == id)]['air_object_id'].unique())

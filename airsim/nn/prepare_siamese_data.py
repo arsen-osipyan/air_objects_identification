@@ -1,13 +1,11 @@
+import os
 import datetime
 import pandas as pd
 import torch
 
 from hparams import config
-from utils import (get_csv_files_from_dir,
-                   get_tracks_timeranges_intersection,
-                   extend_track_with_linear_interpolation,
-                   transform_cp_data,
-                   get_track)
+from utils import extend_track_with_linear_interpolation
+from airsim.utils import get_tracks_timeranges_intersection, get_track
 
 
 def generate_siamese_data_from_cp_tracks(track_1, track_2, track_length, drop_last=False):
@@ -75,7 +73,8 @@ def generate_siamese_data_from_cp_data_file(file, track_length):
     x, y = torch.empty((0, 2, row_length, track_length)), torch.empty((0, 1))
 
     cp_data = pd.read_csv(file)
-    cp_data = transform_cp_data(cp_data)
+    cp_data = cp_data.sort_values(by=['rs_id', 'id', 'time']) \
+        .reset_index(drop=True)[['rs_id', 'id', 'time', 'x', 'y', 'z']].dropna()
 
     track_ids = [(rs_id, id) for rs_id in cp_data['rs_id'].unique() for id in
                  cp_data[cp_data['rs_id'] == rs_id]['id'].unique()]
@@ -101,16 +100,19 @@ def generate_siamese_data_from_cp_data_file(file, track_length):
     return x, y
 
 
-def generate_siamese_data_from_cp_data_dir(dir, track_length):
+def generate_siamese_data_from_cp_data_dir(dir_name, track_length):
     row_length = 4
     x, y = torch.empty((0, 2, row_length, track_length)), torch.empty((0, 1))
 
-    for file in get_csv_files_from_dir(dir):
-        x_cur, y_cur = generate_siamese_data_from_cp_data_file(file, track_length)
-        print(f'- file {file} ({x_cur.size(0)} rows)')
+    for file in os.listdir(dir_name):
+        f = os.path.join(dir_name, file)
+        if os.path.isfile(f) and f.endswith('.csv'):
+            print(f' - file {file}', end=' ')
+            x_cur, y_cur = generate_siamese_data_from_cp_data_file(file, track_length)
+            print(f'({x_cur.size(0)} rows)')
 
-        x = torch.cat((x, x_cur), 0)
-        y = torch.cat((y, y_cur), 0)
+            x = torch.cat((x, x_cur), 0)
+            y = torch.cat((y, y_cur), 0)
 
     return x, y
 
