@@ -1,6 +1,6 @@
 import torch
 
-from models import SiameseDataset, SiameseNetwork, ContrastiveLoss
+from models import SiameseDataset, SiameseNetwork, ContrastiveLoss, TrackToVector
 from hparams import config
 
 
@@ -32,14 +32,18 @@ def main():
     test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset,
                                                   batch_size=len(test_dataset))
 
-    model = SiameseNetwork()
+    # model = SiameseNetwork()
+    model = TrackToVector()
     criterion = ContrastiveLoss(margin=config['loss_margin'], alpha=config['loss_alpha'])
 
-    model.load_state_dict(torch.load('model.pt'))
+    # model.load_state_dict(torch.load('model.pt'))
+    model.load_state_dict(torch.load('TrackToVector.pt'))
 
     for x_1, x_2, y in test_dataloader:
         with torch.inference_mode():
-            out_1, out_2 = model(x_1, x_2)
+            # out_1, out_2 = model(x_1, x_2)
+            out_1 = model(x_1)
+            out_2 = model(x_2)
 
             loss = criterion(out_1, out_2, y)
             print(f'Loss = {loss.item()}')

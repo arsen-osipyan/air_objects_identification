@@ -54,6 +54,46 @@ class SiameseNetwork(torch.nn.Module):
         return out_1, out_2
 
 
+class TrackToVector(torch.nn.Module):
+
+    def __init__(self):
+        super(TrackToVector, self).__init__()
+
+        self.cnn = torch.nn.Sequential(
+            torch.nn.Conv1d(in_channels=4, out_channels=64, kernel_size=3, padding=1),
+            torch.nn.BatchNorm1d(64),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool1d(kernel_size=2, stride=2),
+
+            torch.nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+            torch.nn.BatchNorm1d(128),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool1d(kernel_size=2, stride=2),
+
+            torch.nn.Conv1d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
+            torch.nn.BatchNorm1d(256),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool1d(kernel_size=2, stride=2),
+
+            torch.nn.Conv1d(in_channels=256, out_channels=512, kernel_size=3, padding=1),
+            torch.nn.BatchNorm1d(512),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool1d(kernel_size=4),
+        )
+
+        self.fc = torch.nn.Sequential(
+            torch.nn.Linear(512, 256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256, 64),
+        )
+
+    def forward(self, x):
+        out = self.cnn(x)
+        out = out.view(out.size(0), -1)
+        out = self.fc(out)
+        return out
+
+
 class ContrastiveLoss(torch.nn.Module):
 
     def __init__(self, margin=2.0, alpha=2.0):

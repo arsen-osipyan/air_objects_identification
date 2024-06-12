@@ -20,15 +20,17 @@ def compute_distance_between_tracks_determined(track_1, track_2):
     track_1 = track_1[track_1['time'] <= t_max]
     track_2 = track_2[track_2['time'] <= t_max]
 
-    p1 = interpolate_track(track_1, t_max)
-    p2 = interpolate_track(track_2, t_max)
+    t_0 = min(track_1['time'].max(), track_2['time'].max())
+
+    p1 = interpolate_track(track_1, t_0)
+    p2 = interpolate_track(track_2, t_0)
 
     # Delta between two items of data
     delta = np.array([p1['x'] - p2['x'], p1['y'] - p2['y'], p1['z'] - p2['z']])
 
     # Building cov matrices
-    cov_1 = np.diag([1.0**2, 1.0**2, 1.0**2])
-    cov_2 = np.diag([1.0**2, 1.0**2, 1.0**2])
+    cov_1 = np.diag([p1['x_err']**2, p1['y_err']**2, p1['z_err']**2])
+    cov_2 = np.diag([p2['x_err']**2, p2['y_err']**2, p2['z_err']**2])
     cov = cov_1 + cov_2
 
     # Calculating proximity measure
@@ -118,3 +120,5 @@ def identify_air_objects_determined(data):
             new_ao_id = min(ao_ids_unique)
             for track in ao_ids.keys():
                 data.loc[(data['rs_id'] == track[0]) & (data['id'] == track[1]), 'air_object_id'] = new_ao_id
+
+    return data

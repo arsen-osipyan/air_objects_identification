@@ -14,12 +14,12 @@ def save_cp_data(cp_data, cp_data_dir, data_usage_aim):
 def generate_linear_tracks(n_tracks, axis='xyz'):
     tracks = []
 
-    Rx_0 = np.random.uniform(-1.0e+6, 1.0e+6, size=n_tracks)
-    Ry_0 = np.random.uniform(-1.0e+6, 1.0e+6, size=n_tracks)
-    Rz_0 = np.random.uniform(1.0e+4 - 1.0e+2, 1.0e+4 + 1.0e+2, size=n_tracks)
+    Rx_0 = np.random.uniform(-1.0e+7, 1.0e+7, size=n_tracks)
+    Ry_0 = np.random.uniform(-1.0e+7, 1.0e+7, size=n_tracks)
+    Rz_0 = np.random.uniform(5.0e+3, 15.0e+3, size=n_tracks)
 
-    Vx = np.random.uniform(-0.4, 0.4, size=n_tracks) if 'x' in axis else [0.0] * n_tracks
-    Vy = np.random.uniform(-0.4, 0.4, size=n_tracks) if 'y' in axis else [0.0] * n_tracks
+    Vx = np.random.uniform(-0.5, 0.5, size=n_tracks) if 'x' in axis else [0.0] * n_tracks
+    Vy = np.random.uniform(-0.5, 0.5, size=n_tracks) if 'y' in axis else [0.0] * n_tracks
     Vz = 0.005 * np.random.randn(n_tracks) if 'z' in axis else [0.0] * n_tracks
 
     for i in range(n_tracks):
@@ -50,13 +50,13 @@ def generate_cp_data(t_max_seconds, axis='xyz'):
         radar_systems=[
             RadarSystem(position=np.array([0, 0, 0]),
                         detection_radius=1e+308,
-                        error=1.0,
+                        error=10.0,
                         detection_fault_probability=0.01,
                         detection_period=250,
                         detection_delay=np.random.randint(0, 250//dt) * dt),
             RadarSystem(position=np.array([0, 0, 0]),
                         detection_radius=1e+308,
-                        error=1.0,
+                        error=10.0,
                         detection_fault_probability=0.01,
                         detection_period=250,
                         detection_delay=np.random.randint(0, 250//dt) * dt),

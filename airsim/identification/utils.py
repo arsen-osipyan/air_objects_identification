@@ -20,7 +20,7 @@ def find_connected_components(graph):
 
 def get_identified_pairs(distances):
     min_pairs = []
-    min_dist = distances['dist'].max() * len(distances)
+    min_dist = distances['dist'].max() * len(distances) + 1.0
 
     for i in range(len(distances)):
         start_with_row = i
@@ -30,7 +30,6 @@ def get_identified_pairs(distances):
 
         while len(distances[~distances['used']]) != 0:
             row = distances[~distances['used']].iloc[start_with_row]
-
             start_with_row = 0
 
             cur_pairs.append((row['id_1'], row['id_2']))

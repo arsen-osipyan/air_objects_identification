@@ -40,6 +40,8 @@ class Supervisor:
             t.step(dt)
 
         self.__control_point.upload_data()
+
+    def identify_air_objects(self):
         self.__control_point.identify_air_objects()
 
     def get_data(self) -> pd.DataFrame:
