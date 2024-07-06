@@ -120,7 +120,7 @@ def generate_siamese_data_from_cp_data_dir(dir_name, track_length):
 def main():
     cp_data_dir = 'CP_data'
     siamese_data_dir = 'data'
-    data_usage_aims = ('train', 'test')
+    data_usage_aims = ('valid',)
 
     timestamp = False
 

@@ -19,33 +19,12 @@ class SiameseDataset(torch.utils.data.Dataset):
 
 class SiameseNetwork(torch.nn.Module):
 
-    def __init__(self):
+    def __init__(self, encoder):
         super(SiameseNetwork, self).__init__()
-
-        self.cnn = torch.nn.Sequential(
-            torch.nn.Conv1d(in_channels=4, out_channels=16, kernel_size=9),
-            torch.nn.LeakyReLU(),
-            torch.nn.Conv1d(in_channels=16, out_channels=64, kernel_size=9),
-            torch.nn.LeakyReLU(),
-            torch.nn.Conv1d(in_channels=64, out_channels=256, kernel_size=9),
-            torch.nn.LeakyReLU(),
-            torch.nn.Conv1d(in_channels=256, out_channels=512, kernel_size=8),
-            torch.nn.LeakyReLU(),
-        )
-
-        self.fc = torch.nn.Sequential(
-            torch.nn.Linear(512, 1024),
-            torch.nn.LeakyReLU(),
-            torch.nn.Linear(1024, 256),
-            torch.nn.LeakyReLU(),
-            torch.nn.Linear(256, 2),
-        )
+        self.encoder = encoder
 
     def forward_once(self, x):
-        out = self.cnn(x)
-        out = out.view(out.size(0), -1)
-        out = self.fc(out)
-        return out
+        return self.encoder(x)
 
     def forward(self, x_1, x_2):
         out_1 = self.forward_once(x_1)
@@ -84,7 +63,7 @@ class TrackToVector(torch.nn.Module):
         self.fc = torch.nn.Sequential(
             torch.nn.Linear(512, 256),
             torch.nn.ReLU(),
-            torch.nn.Linear(256, 64),
+            torch.nn.Linear(256, 32),
         )
 
     def forward(self, x):

@@ -1,17 +1,22 @@
 import datetime
 import numpy as np
 
-from airsim.collections import AirObject, AirEnv, RadarSystem, Supervisor
+from airsim.collections import AirObject, AirEnv, RadarSystem, SimulationManager
 
 
 def save_cp_data(cp_data, cp_data_dir, data_usage_aim):
     timestamp = datetime.datetime.now().strftime('%d%m%H%M%S')
     filename = f'{cp_data_dir}/{data_usage_aim}/data_{timestamp}.csv'
     cp_data.to_csv(filename)
-    print(f'{filename} saved')
 
 
 def generate_linear_tracks(n_tracks, axis='xyz'):
+    '''
+    Генерация заданного кол-ва функций траекторий по заданным осям
+    :param n_tracks: кол-во функций траекторий
+    :param axis: оси, по которым происходит движение
+    :return: список функций
+    '''
     tracks = []
 
     Rx_0 = np.random.uniform(-1.0e+7, 1.0e+7, size=n_tracks)
@@ -39,11 +44,17 @@ def generate_linear_tracks(n_tracks, axis='xyz'):
 
 
 def generate_cp_data(t_max_seconds, axis='xyz'):
+    '''
+    Генерация данных ПУ (МТИ) системы из 2 РЛС и 2 ВО за указанное время в указанных осях
+    :param t_max_seconds: время в секундах конца моделирования
+    :param axis: оси, по которых происходит движение ВО
+    :return: МТИ
+    '''
     t_min = 0
     t_max = t_max_seconds * 1000
     dt = 50
 
-    supervisor = Supervisor(
+    sm = SimulationManager(
         air_env=AirEnv(air_objects=[
             AirObject(track=ao_track) for ao_track in generate_linear_tracks(2, axis=axis)
         ]),
@@ -63,49 +74,79 @@ def generate_cp_data(t_max_seconds, axis='xyz'):
         ]
     )
 
-    supervisor.run(t_min, t_max, dt)
+    sm.run(t_min, t_max, dt)
 
-    return supervisor.get_data()
+    return sm.get_data()
 
 
 def generate_train_cp_data(cp_data_dir):
+    '''
+        Генерация обучающих данных на системах с движением по одной, двум или трем осям
+    '''
     data_usage_aim = 'train'
 
+    print(f'x: ', end='')
     for i in range(30):
         cp_data = generate_cp_data(t_max_seconds=1800, axis='x')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
+    print(f'y: ', end='')
     for i in range(30):
         cp_data = generate_cp_data(t_max_seconds=1800, axis='y')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
+    print(f'xy: ', end='')
     for i in range(30):
         cp_data = generate_cp_data(t_max_seconds=1800, axis='xy')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
+    print(f'xyz: ', end='')
     for i in range(120):
         cp_data = generate_cp_data(t_max_seconds=1800, axis='xyz')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
 
 def generate_test_cp_data(cp_data_dir):
-    data_usage_aim = 'test'
+    '''
+    Генерация тестовых данных на системах с движением по одной, двум или трем осям
+    '''
+    data_usage_aim = 'valid'
 
+    print(f'x: ', end='')
     for i in range(10):
-        cp_data = generate_cp_data(t_max_seconds=300, axis='x')
+        cp_data = generate_cp_data(t_max_seconds=100, axis='x')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
+    print(f'y: ', end='')
     for i in range(10):
-        cp_data = generate_cp_data(t_max_seconds=300, axis='y')
+        cp_data = generate_cp_data(t_max_seconds=100, axis='y')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
+    print(f'xy: ', end='')
     for i in range(10):
-        cp_data = generate_cp_data(t_max_seconds=300, axis='xy')
+        cp_data = generate_cp_data(t_max_seconds=100, axis='xy')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
+    print(f'xyz: ', end='')
     for i in range(40):
-        cp_data = generate_cp_data(t_max_seconds=300, axis='xyz')
+        cp_data = generate_cp_data(t_max_seconds=100, axis='xyz')
         save_cp_data(cp_data, cp_data_dir, data_usage_aim)
+        print('*', end='')
+    print()
 
 
 if __name__ == '__main__':

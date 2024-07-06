@@ -5,10 +5,23 @@ from hparams import config
 
 
 def calc_accuracy(y_pred, y):
+    '''
+    Расчет точности
+    :param y_pred: предсказанный ответ
+    :param y: реальный ответ
+    :return: точность предсказаний
+    '''
     return torch.mean(torch.tensor(y_pred == y, dtype=torch.float32))
 
 
 def calc_f_beta(y_pred, y, beta=1.0):
+    '''
+    Расчет метрики F_beta
+    :param y_pred: предсказанный ответ
+    :param y: реальный ответ
+    :param beta: параметр beta
+    :return: значение метрики F_beta
+    '''
     t = torch.cat((y_pred, y), 1)
 
     true_positive = t[(t[:, 0] == 0) & (t[:, 1] == 0), :].size(0)
@@ -28,20 +41,17 @@ def calc_f_beta(y_pred, y, beta=1.0):
 
 
 def main():
-    test_dataset = SiameseDataset(path='data/test')
+    test_dataset = SiameseDataset(path='data/valid')
     test_dataloader = torch.utils.data.DataLoader(dataset=test_dataset,
                                                   batch_size=len(test_dataset))
 
-    # model = SiameseNetwork()
     model = TrackToVector()
     criterion = ContrastiveLoss(margin=config['loss_margin'], alpha=config['loss_alpha'])
 
-    # model.load_state_dict(torch.load('model.pt'))
     model.load_state_dict(torch.load('TrackToVector.pt'))
 
     for x_1, x_2, y in test_dataloader:
         with torch.inference_mode():
-            # out_1, out_2 = model(x_1, x_2)
             out_1 = model(x_1)
             out_2 = model(x_2)
 
@@ -49,22 +59,18 @@ def main():
             print(f'Loss = {loss.item()}')
 
             dist = torch.nn.functional.pairwise_distance(out_1, out_2, keepdim=True)
-            y_pred = dist >= config['loss_margin'] / 2
+            y_pred = dist >= 0.1  # config['loss_margin'] / 2
             print(f'Accuracy = {calc_accuracy(y_pred, y)}')
             print(f'F_1 = {calc_f_beta(y_pred, y)}')
 
             X = torch.cat((y, dist), 1)
+            print(list([d.item() for d in list(dist)]))
             print('Distance range between identical objects: [{d_min}, {d_max}]'.format(
                 d_min=X[X[:, 0] == 0, :][:, 1].min(), d_max=X[X[:, 0] == 0, :][:, 1].max()
             ))
             print('Distance range between different objects: [{d_min}, {d_max}]'.format(
                 d_min=X[X[:, 0] == 1, :][:, 1].min(), d_max=X[X[:, 0] == 1, :][:, 1].max()
             ))
-
-            # outs = torch.cat((out_1, out_2), 0)
-            # fig, ax = plt.subplots(figsize=(12, 12))
-            # ax.scatter(outs[:, 0], outs[:, 1], s=1)
-            # plt.show()
 
 
 if __name__ == '__main__':
