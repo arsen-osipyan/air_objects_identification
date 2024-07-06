@@ -46,20 +46,29 @@ class ControlPoint(Model):
         if self.time.get() % self.__uploading_period == self.__uploading_delay:
             self.upload_data()
 
-    def identify_air_objects(self):
+    def identify_air_objects(self) -> NoReturn:
+        '''
+        Запуск алгоритма отождествления в соответствии с заданным параметром
+        '''
         if self.__identification_method == 'determined':
             self.identify_air_objects_determined()
         elif self.__identification_method == 'nn':
             self.identify_air_objects_nn()
 
-    def identify_air_objects_nn(self):
+    def identify_air_objects_nn(self) -> NoReturn:
+        '''
+        Запуск нейросетевого алгоритма отождествления
+        '''
         print('Running ControlPoint.identify_air_objects_nn()')
         start_time = time.time()
         identify_air_objects_nn(self.__data)
         end_time = time.time()
         print('- elapsed time: {:.4f} seconds'.format(end_time - start_time))
 
-    def identify_air_objects_determined(self):
+    def identify_air_objects_determined(self) -> NoReturn:
+        '''
+        Запуск детерминированного алгоритма отождествления
+        '''
         print('Running ControlPoint.identify_air_objects_determined()')
         start_time = time.time()
         identify_air_objects_determined(self.__data)
@@ -67,6 +76,9 @@ class ControlPoint(Model):
         print('- elapsed time: {:.4f} seconds'.format(end_time - start_time))
 
     def upload_data(self) -> NoReturn:
+        '''
+        Загрузка новых записей от всех подключенных РЛС
+        '''
         current_time = self.time.get()
 
         for k, v in self.__radar_systems.items():
@@ -83,7 +95,10 @@ class ControlPoint(Model):
 
         self.__extend_tracks_ids()
 
-    def __extend_tracks_ids(self):
+    def __extend_tracks_ids(self) -> NoReturn:
+        '''
+        Проставление air_object_id для новых записей уже размеченных траекторий
+        '''
         for rs_id in self.__data['rs_id'].unique():
             for id in self.__data[self.__data['rs_id'] == rs_id]['id'].unique():
                 ao_ids = self.__data[(self.__data['rs_id'] == rs_id) &
@@ -129,10 +144,13 @@ class ControlPoint(Model):
         self.__data = self.__data.iloc[0:0]
         self.__last_load_time = None
 
-    def clear_identification(self):
+    def clear_identification(self) -> NoReturn:
+        '''
+        Очищение МТИ от размеченных значений air_object_id
+        '''
         self.__data.loc[:, 'air_object_id'] = -1
 
-    def set_identification_method(self, identification_method):
+    def set_identification_method(self, identification_method: str) -> NoReturn:
         self.__identification_method = identification_method
 
     def __repr__(self) -> str:

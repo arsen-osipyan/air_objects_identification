@@ -8,9 +8,6 @@ from .airobject import AirObject
 class AirEnv(Model):
 
     def __init__(self, air_objects: List[AirObject] = None) -> NoReturn:
-        """
-        Initializes AirEnv
-        """
         super().__init__()
         self.__air_objects = dict()
         self.__air_object_id_incr = 0
@@ -21,25 +18,15 @@ class AirEnv(Model):
 
     def trigger(self) -> NoReturn:
         """
-        Runs trigger() method of all attached AirObject-s
+        Вызов метода trigger() для всех ВО
         """
         for ao_id, ao in self.__air_objects.items():
             ao.trigger()
 
     def is_attached(self, air_object: AirObject) -> bool:
-        """
-        Checks if provided AirObject is attached to AirEnv
-        :param air_object: AirObject to check
-        :return: attachment status
-        """
         return air_object in self.__air_objects.values()
 
     def attach_air_object(self, air_object: AirObject) -> int:
-        """
-        Attaches AirObject if it wasn't attached
-        :param air_object: AirObject to attach
-        :return: AirObject inner id
-        """
         if self.is_attached(air_object):
             raise RuntimeError('AirObject already attached to AirEnv.')
         self.__air_objects[self.__air_object_id_incr] = air_object
@@ -47,11 +34,6 @@ class AirEnv(Model):
         return self.__air_object_id_incr - 1
 
     def detach_air_object(self, air_object: AirObject) -> int:
-        """
-        Detaches AirObject if it was attached
-        :param air_object: AirObject to detach
-        :return: AirObject inner id
-        """
         if not self.is_attached(air_object):
             raise RuntimeError('AirObject is not attached to AirEnv.')
         for k, v in self.__air_objects.items():
@@ -61,8 +43,8 @@ class AirEnv(Model):
 
     def air_objects_dataframe(self) -> pd.DataFrame:
         """
-        Gives all AirObject-s positions in current time
-        :return: dataframe with AirObject-s positions and ids (optional)
+        Для текущего момента модельного времени формируется таблица положений всех ВО
+        :return: pd.DataFrame - таблица
         """
         data = pd.DataFrame(columns=['id', 'x', 'y', 'z'])
         for ao_id, ao in self.__air_objects.items():

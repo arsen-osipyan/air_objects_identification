@@ -42,10 +42,10 @@ class RadarSystem(Model):
                 self.detect_air_objects()
 
     def detect_air_objects(self) -> NoReturn:
-        # Get AirObjects' positions from observable AirEnv
+        # Получение положений всех ВО в наблюдаемой AirEnv
         detections = self.__air_env.air_objects_dataframe()
 
-        # Filter AirObjects with not observable positions
+        # Фильтрация ВО с координатами вне области наблюдения
         p = self.__position
         r = self.__detection_radius
         detections['is_observed'] = detections.apply(
@@ -55,7 +55,7 @@ class RadarSystem(Model):
         detections = detections[detections['is_observed']]
         detections.drop(columns=['is_observed'], inplace=True)
 
-        # Add / edit columns
+        # Добавление колонок time, x_err, y_err, z_err и изменение значений x, y, z (добавление ошибки измерений)
         detections['time'] = self.time.get()
         detections['x'] = detections['x'] + np.random.uniform(-self.__error, self.__error, len(detections))
         detections['y'] = detections['y'] + np.random.uniform(-self.__error, self.__error, len(detections))
