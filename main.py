@@ -1,56 +1,39 @@
 import numpy as np
-import pandas as pd
 
-from airsim.collections import AirObject, AirEnv, RadarSystem, ControlPoint, Supervisor
-from airsim.time import Time
+from airsim.collections import AirObject, AirEnv, RadarSystem, SimulationManager
 
 
-t_min = 0
-t_max = 5 * 125000
-dt = 250
+# Пример работы с программным модулем
 
-supervisor = Supervisor(
+
+# Создание системы и загрузка в диспетчер моделирования
+# достаточно задать лишь воздушную обстановку и РЛС, ПУ создается автоматически SimulationManager
+sm = SimulationManager(
     air_env=AirEnv(air_objects=[
-        # AirObject(track=lambda t: np.array([-50000 + 0.2 * t + 0.15 * t**2 / 625000, 200, 30000])),
-        # AirObject(track=lambda t: np.array([-50000 + 0.2 * t + 0.10 * t**2 / 625000, -200, 30000])),
-        AirObject(track=lambda t: np.array([-50000 + 0.2 * t, 10, 30000])),
-        AirObject(track=lambda t: np.array([-50000 + 0.2 * t, -10, 30000])),
+        AirObject(track=lambda t: np.array([0.222 * t / 1000.0, 0.0, 10000.0])),
     ]),
     radar_systems=[
         RadarSystem(position=np.array([0, 0, 0]),
-                    detection_radius=50000,
-                    error=1.0,
+                    detection_radius=100000,
+                    error=25.0,
                     detection_fault_probability=0.01,
                     detection_period=1000,
-                    detection_delay=np.random.randint(0, 250//dt) * dt),
-        RadarSystem(position=np.array([50000, 0, 0]),
-                    detection_radius=50000,
-                    error=1.0,
-                    detection_fault_probability=0.01,
-                    detection_period=1000,
-                    detection_delay=np.random.randint(0, 250//dt) * dt),
-        RadarSystem(position=np.array([100000, 0, 0]),
-                    detection_radius=50000,
-                    error=1.0,
-                    detection_fault_probability=0.01,
-                    detection_period=1000,
-                    detection_delay=np.random.randint(0, 250//dt) * dt),
-        RadarSystem(position=np.array([150000, 0, 0]),
-                    detection_radius=50000,
-                    error=1.0,
-                    detection_fault_probability=0.01,
-                    detection_period=1000,
-                    detection_delay=np.random.randint(0, 250//dt) * dt),
+                    detection_delay=0)
     ],
-    identification_method='determined'
+    identification_method='nn'
 )
 
-supervisor.run(t_min, t_max, dt)
+# Запуск моделирования
+# время в мс
+sm.run(0, 1800000, 1000)
 
-cp_data = supervisor.get_data()
+# Получение данных ПУ (МТИ)
+cp_data = sm.get_data()
 
+# Печать таблицы МТИ
 print(cp_data)
 
+# Проверка уникальности присвоения air_object_id для каждой трассы
 for rs_id in cp_data['rs_id'].unique():
     for id in cp_data[cp_data['rs_id'] == rs_id]['id'].unique():
         print(f'radar_system: {rs_id}, air_object: {id}, ids: ', end='')
